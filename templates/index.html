@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <title>メモ</title>
+    <style>
+        li form {
+            display: inline-block;
+        }
+
+        li form input[type="submit"] {
+            margin-left: 5px;
+        }
+
+        .addition-form {
+            margin-top: 50px;
+        }
+
+        .addition-form textarea {
+            width: 100%;
+            height: 200px;
+            resize: vertical;
+        }
+
+        .addition-form input[type="submit"] {
+            margin-top: 10px;
+        }
+
+         /* タスクの記入欄を右に少しずらすスタイル */
+         .task-form {
+            margin-left: 30px; /* 任意の余白を指定 */
+        }
+
+        /* 左側の4分の1の領域に線を引くスタイル */
+        .left-panel {
+            border-right: 1px solid #ccc;
+            padding-right: 10px;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 20%; /* 左側の幅を指定 */
+            overflow-y: scroll; /* カテゴリーが画面をはみ出した場合にスクロールさせる */
+        }
+
+        /* 右側の3分の3の領域のスタイル */
+        .right-panel {
+            padding-left: 25%; /* 左側の幅と同じだけオフセットする */
+        }
+
+        /* カテゴリー選択メニューのスタイル */
+        .category-menu {
+            margin-bottom: 10px;
+            /* 修正：カテゴリーメニューを左側に表示 */
+            float: left;
+            margin-right: 10px;
+        }
+
+        .category-menu a {
+            display: block; /* リンクをブロック要素に変更 */
+            margin-bottom: 5px; /* 追加：リンク間のスペースを調整 */
+        }
+
+        /* 追加：カテゴリーメニューを右に移動するスタイル */
+        .navbar-dropdown.is-flex-direction-row {
+            display: flex;
+            flex-direction: row;
+            /* 修正：カテゴリーメニューの位置を右側に移動 */
+            position: absolute;
+            right: 0;
+        }
+
+        /* 追加：カテゴリーメニューのリンクをクリックしたときのスタイル */
+        .navbar-dropdown.is-flex-direction-row a {
+            display: block;
+            padding: 10px;
+        }
+
+        .edit-button {
+            margin-left: 10px; /* 任意の余白を指定 */
+        }
+
+         /* type="submit" のボタンのスタイル */
+         input[type="submit"].edit-button {
+            background-color: rgba(255, 255, 0, 0.5); /* 編集ボタンの背景色を黄色に薄く */
+            color: black; /* テキストの色を黒に変更 */
+        }
+
+        input[type="submit"].delete-button {
+            background-color: rgba(255, 0, 0, 0.5); /* 削除ボタンの背景色を赤に薄く */
+            color: white; /* テキストの色を白に変更 */
+        }
+
+        input[type="submit"].save-button {
+            background-color: rgba(0, 0, 255, 0.5); /* 保存ボタンの背景色を青に薄く */
+            color: white; /* テキストの色を白に変更 */
+        }
+    </style>
+</head>
+<body>
+    <div class="columns">
+        <div class="column is-9 right-panel">
+            <ul>
+                {% for task in tasks %}
+                    <li>
+                        <form method="POST" action="/edit" class="task-form">
+                            <!-- タスクの記入欄 -->
+                            <input type="text" name="task" value="{{task['task_name']}}">
+                            <input type="hidden" name="task_id" value="{{task['id']}}">
+                            <select name="category_id">
+                                {% for category in categories %}
+                                    <option value="{{category.id}}" {% if task.category_id == category.id %}selected{% endif %}>{{category.category_name}}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" value="編集" class="edit-button">
+                        </form>
+                        <form method="POST" action="/finish">
+                            <input type="hidden" name="task_id" value="{{task['id']}}">
+                            <input type="submit" value="削除" class="delete-button">
+                        </form>
+                        {% if task.addition %}
+                            <div class="addition-content">
+                                {% if task.editing %}
+                                    <form method="POST" action="/save_addition">
+                                        <input type="hidden" name="task_id" value="{{task['id']}}">
+                                        <textarea name="addition" placeholder="追加事項を記入してください">{{ task.addition }}</textarea>
+                                        <input type="submit" value="保存" class="save-button">
+                                    </form>
+                                {% else %}
+                                    <div class="addition-text">{{ task.addition }}</div>
+                                    <form method="POST" action="/edit_addition">
+                                        <input type="hidden" name="task_id" value="{{task['id']}}">
+                                        <input type="submit" value="編集" class="edit-button">
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="addition-form">
+                                <form method="POST" action="/addition">
+                                    <input type="hidden" name="task_id" value="{{task['id']}}">
+                                    <textarea name="addition" placeholder="追加事項を記入してください"></textarea>
+                                    <input type="submit" value="追加" class="edit-button">
+                                </form>
+                            </div>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <form method="POST" action="/">
+                <input type="text" name="task" placeholder="タスク">
+                <select name="category_id">
+                    {% for category in categories %}
+                        <option value="{{category.id}}">{{category.category_name}}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" value="送信">
+            </form>
+        </div>
+        <div class="left-panel">
+            <!-- カテゴリーメニューを表示する -->
+            <div class="category-menu">
+                <a class="navbar-item" href="/category/1">仕事</a>
+                <a class="navbar-item" href="/category/2">学校</a>
+                <a class="navbar-item" href="/category/3">バイト</a>
+                <a class="navbar-item" href="/category/4">家</a>
+                <a class="navbar-item" href="/category/5">ゲーム</a>
+                <a class="navbar-item" href="/category/6">すべて</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // カテゴリーメニューをトグルする関数
+        function toggleCategoryMenu() {
+            var categoryMenu = document.getElementById("categoryMenu");
+            if (categoryMenu.classList.contains("is-visible")) {
+                categoryMenu.classList.remove("is-visible");
+            } else {
+                categoryMenu.classList.add("is-visible");
+            }
+        }
+    </script>
+</body>
+</html>
